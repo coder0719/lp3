@@ -1,52 +1,49 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+# Import necessary libraries
+import numpy as np
+import matplotlib.pyplot as plt
 
+# Define the function and its derivative
+def function(x):
+    return (x + 3) ** 2
 
-# Load the Dataset  
-df = pd.read_csv('diabetes.csv')
+def derivative(x):
+    return 2 * (x + 3)
 
+# Gradient Descent parameters
+learning_rate = 0.1  # Step size
+n_iterations = 50    # Number of iterations
+x_start = 2          # Starting point
 
-# Separate features and target variable
-X = df.drop(columns=['Outcome'])  # Features
-y = df['Outcome']  # Target variable
+# Lists to store x values and corresponding y values for visualization
+x_values = [x_start]
+y_values = [function(x_start)]
 
+# Gradient Descent Loop
+x = x_start
+for i in range(n_iterations):
+    gradient = derivative(x)           # Compute the gradient at the current point
+    x = x - learning_rate * gradient    # Update x value
+    y = function(x)                     # Compute y for the updated x
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Append updated values for visualization
+    x_values.append(x)
+    y_values.append(y)
 
+# Plot the function and the path of gradient descent
+x_range = np.linspace(-10, 4, 100)
+y_range = function(x_range)
 
-# Normalize the data
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+plt.figure(figsize=(10, 6))
+plt.plot(x_range, y_range, label="y = (x + 3)^2", color="blue")
+plt.scatter(x_values, y_values, color="red", label="Gradient Descent Path")
+plt.plot(x_values, y_values, color="red", linestyle="--")
+plt.title("Gradient Descent to Find Local Minima of y = (x + 3)^2")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
 
+# Show the plot
+plt.show()
 
-# Initialize the KNN classifier
-knn = KNeighborsClassifier(n_neighbors=5)  # You can experiment with different values of 'k'
-
-
-# Train the model
-knn.fit(X_train, y_train)
-
-
-# Make predictions
-y_pred = knn.predict(X_test)
-
-
-# Calculate performance metrics
-conf_matrix = confusion_matrix(y_test, y_pred)
-accuracy = accuracy_score(y_test, y_pred)
-error_rate = 1 - accuracy
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-
-
-# Print the results
-print("Confusion Matrix:\n", conf_matrix)
-print("Accuracy:", accuracy)
-print("Error Rate:", error_rate)
-print("Precision:", precision)
-print("Recall:", recall)
+# Print final results
+print(f"Local minimum occurs at x = {x_values[-1]:.4f}, y = {y_values[-1]:.4f}")
