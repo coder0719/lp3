@@ -1,57 +1,64 @@
+# Import necessary libraries
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
 
-
-# Step 1: Load the Dataset
-df = pd.read_csv('sales_data.csv')
-
+# Step 1: Load the dataset
+url = 'https://www.kaggle.com/datasets/kyanyoga/sample-sales-data/download'  # Update if stored locally
+df = pd.read_csv(url)
 
 # Step 2: Data Preprocessing
-# Drop non-numeric columns (e.g., 'Customer ID', 'Customer Gender') for clustering
-df = df.drop(columns=['CustomerID', 'Gender'])
+# Dropping unnecessary columns for clustering (ORDERNUMBER, ORDERDATE, etc.)
+df = df[['QUANTITYORDERED', 'PRICEEACH', 'SALES', 'MONTH_ID', 'YEAR_ID']]
 
+# Check for any null values
+print("Null values:\n", df.isnull().sum())
 
-# Check for missing values
-df.dropna(inplace=True)
-
-
-# Normalize the data
+# Scaling the data for K-means
 scaler = StandardScaler()
-df_scaled = scaler.fit_transform(df)
+scaled_data = scaler.fit_transform(df)
 
-
-# Step 3: Determine Optimal Number of Clusters using the Elbow Method
+# Step 3: Determine the optimal number of clusters using the Elbow Method
 inertia = []
-K = range(1, 11)
-for k in K:
+K_range = range(1, 11)
+
+for k in K_range:
     kmeans = KMeans(n_clusters=k, random_state=42)
-    kmeans.fit(df_scaled)
+    kmeans.fit(scaled_data)
     inertia.append(kmeans.inertia_)
 
-
-# Plot the elbow method graph
-plt.figure(figsize=(8, 6))
-plt.plot(K, inertia, 'bo-', markersize=8)
-plt.xlabel('Number of Clusters (k)')
-plt.ylabel('Inertia')
-plt.title('Elbow Method For Optimal k')
+# Plot the Elbow Graph
+plt.figure(figsize=(8, 5))
+plt.plot(K_range, inertia, marker='o')
+plt.xlabel("Number of Clusters (k)")
+plt.ylabel("Inertia")
+plt.title("Elbow Method for Optimal k")
 plt.show()
 
-
-# Step 4: Fit KMeans with the optimal number of clusters (based on elbow method)
-# Assuming optimal k = 4 from elbow plot (adjust based on actual plot)
-optimal_k = 4
+# Step 4: Apply K-Means with Optimal Number of Clusters (e.g., using k=4 after analyzing elbow plot)
+optimal_k = 4  # Replace based on elbow plot observation
 kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-df['Cluster'] = kmeans.fit_predict(df_scaled)
+df['Cluster'] = kmeans.fit_predict(scaled_data)
 
-
-# Step 5: Visualize the Clusters
-plt.figure(figsize=(10, 8))
-plt.scatter(df['Annual Income (k$)'], df['Spending Score (1-100)'], c=df['Cluster'], cmap='viridis', s=50)
-plt.xlabel('Annual Income (in Thousand Dollars)')
-plt.ylabel('Spending Score')
-plt.title('Customer Segments Based on Annual Income and Spending Score')
-plt.colorbar(label='Cluster')
+# Step 5: Visualizations
+# Scatter plot for two features colored by cluster
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=df['QUANTITYORDERED'], y=df['SALES'], hue=df['Cluster'], palette='viridis')
+plt.title("K-Means Clustering on Sales Data")
+plt.xlabel("Quantity Ordered")
+plt.ylabel("Sales")
+plt.legend(title='Cluster')
 plt.show()
+
+# Pair plot of features with cluster color for deeper analysis
+sns.pairplot(df, hue='Cluster', palette='viridis', diag_kind='kde', markers='o')
+plt.suptitle("Pair Plot of Features with Clusters", y=1.02)
+plt.show()
+
+# Optional: Print silhouette score
+silhouette_avg = silhouette_score(scaled_data, df['Cluster'])
+print(f"Silhouette Score for k={optimal_k}: {silhouette_avg:.4f}")
